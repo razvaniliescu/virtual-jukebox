@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Jukebox</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <h1>Virtual Jukebox</h1>
+        <h2>Online users: <span id="user_count">0</span></h2>
+
+        <form action="/add" method="post">
+            <input type="text" name="link" placeholder="Link or YouTube search" required>
+            <button type="submit">Add</button>
+        </form>
+
+        <h2>Now playing:</h2>
+        <div id="now_playing">
+            {% if now_playing %}
+                <div class="song-item">
+                    <img src="{{ now_playing.thumbnail }}" class="thumb" alt="thumbnail">
+                    <div class="song-info">
+                        <strong>{{ now_playing.title }}</strong><br>
+                        <small>{{ now_playing.uploader }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <p>Nothing is playing.</p>
+            {% endif %}
+        </div>
+
+        <div class="skip-button">
+            <button onclick="voteSkip()">Skip</button>
+        </div>
+        <p id="skip_status"></p>
+
+        <div id="queue">
+            <h2>Queue</h2>
+            <div id="queue_list">
+                {% for song in queue %}
+                <div class="song-item">
+                    <img src="{{ song.thumbnail }}" class="thumb" alt="thumbnail">
+                    <div class="song-info">
+                        <strong>{{ song.title }}</strong><br>
+                        <small>{{ song.uploader }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    
+
+    <script>
+        var socket = io();
+        
+        socket.on('now_playing', function(data) {
+            const np = document.getElementById('now_playing');
+            if (data) {
+                np.innerHTML = `
+                    <div class="song-item">
+                        <img src="${data.thumbnail}" class="thumb" alt="thumbnail">
+                        <div class="song-info">
+                            <strong>${data.title}</strong><br>
+                            <small>${data.uploader}</small>
+                        </div>
+                    </div>
+                `;
+            } else {
+                np.innerHTML = `<p>Nothing is playing.</p>`;
+            }
+        });
+        
+        const queueList = document.getElementById("queue_list");
+
+        socket.on("queue_updated", (data) => {
+            const queue = data.queue;
+
+            // Golește lista
+            queueList.innerHTML = "";
+
+            // Reafișează fiecare piesă
+            queue.forEach(song => {
+                const item = document.createElement("div");
+                item.className = "song-item";
+
+                item.innerHTML = `
+                    <img src="${song.thumbnail}" class="thumb" alt="thumbnail">
+                    <div class="song-info">
+                        <strong>${song.title}</strong><br>
+                        <small>${song.uploader}</small>
+                    </div>
+                `;
+
+                queueList.appendChild(item);
+            });
+        });
+
+        socket.on('user_count', (data) => {
+            const userCountSpan = document.getElementById('user_count');
+            userCountSpan.innerText = data.count;
+        });
+
+        function voteSkip() {
+            socket.emit('vote_skip');
+        }
+        
+        socket.on('skip_vote_update', (data) => {
+            const msg = `${data.current} / ${data.needed} votes to skip`;
+            document.getElementById('skip_status').innerText = msg;
+        });
+        
+        socket.on('skip_reset', () => {
+            document.getElementById('skip_status').innerText = '';
+        });        
+    </script>
+</body>
+</html>

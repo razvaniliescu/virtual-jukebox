@@ -1,0 +1,122 @@
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 1rem;
+    text-align: center;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    margin-bottom: 1rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    align-items: center;
+}
+
+input[type="text"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    background-color: #1e1e1e;
+    color: white;
+}
+
+button {
+    background-color: #1db954;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #1ed760;
+}
+
+.skip-button {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#now_playing {
+    background-color: #333;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#queue {
+    margin-top: 2rem;
+}
+
+.song-item {
+    display: flex;
+    align-items: center;
+    background-color: #1e1e1e;
+    padding: 0.7rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.thumb {
+    width: 80px;
+    height: 45px;
+    object-fit: cover;
+    margin-right: 1rem;
+    border-radius: 4px;
+}
+
+.song-info {
+    flex: 1;
+    text-align: left;
+}
+
+#skip_status {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    color: #aaa;
+}
+
+#now_playing .song-item {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+}
+#now_playing img.thumb {
+    width: 120px;
+    height: 67px;
+}
+
+@media (hover: none) {
+    button {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+    }
+
+    input[type="text"] {
+        font-size: 1.2rem;
+    }
+}
