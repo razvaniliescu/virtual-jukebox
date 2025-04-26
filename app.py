@@ -5,6 +5,7 @@ import subprocess
 import time
 import os
 from werkzeug.utils import secure_filename
+import shutil
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -18,6 +19,7 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp3', 'm4a', 'wav', 'mp4', 'mkv', 'mov'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+shutil.rmtree(UPLOAD_FOLDER, ignore_errors=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
@@ -62,7 +64,7 @@ def handle_vote_skip():
 
     if current_votes >= needed_votes:
         print("\nMajority voted skip!")
-        subprocess.run(["pkill", "mpv"])  # Omoară mpv-ul
+        subprocess.run(["pkill", "mpv"])
 
 
 def play_music():
@@ -143,7 +145,8 @@ def upload_file():
         return redirect('/')
 
     file = request.files['file']
-
+    print(file.filename)
+    
     if file.filename == '':
         return redirect('/')
 
@@ -152,19 +155,18 @@ def upload_file():
         upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(upload_path)
 
-        # Dacă e video, îl convertim
         if filename.endswith(('.mp4', '.mkv', '.mov')):
             audio_filename = filename.rsplit('.', 1)[0] + '.mp3'
             audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
 
             convert_to_audio(upload_path, audio_path)
-            os.remove(upload_path)  # șterge video-ul original
+            os.remove(upload_path)
 
             song = {
                 "title": audio_filename,
                 "uploader": "Uploaded",
                 "audio_url": audio_path,
-                "thumbnail": "https://via.placeholder.com/100x100.png?text=Audio"
+                "thumbnail": 'static/default.jpeg'
             }
         else:
             # E deja audio
@@ -172,7 +174,7 @@ def upload_file():
                 "title": filename,
                 "uploader": "Uploaded",
                 "audio_url": upload_path,
-                "thumbnail": "https://via.placeholder.com/100x100.png?text=Audio"
+                "thumbnail": 'static/default.jpeg'
             }
 
         queue.append(song)
