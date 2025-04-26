@@ -15,7 +15,11 @@
 
         <form action="/add" method="post">
             <input type="text" name="link" placeholder="Link or YouTube search" required>
-            <button type="submit">Add</button>
+            <button type="submit">Search</button>
+        </form>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="audio_file" accept=".mp3,.wav,.m4a" required>
+            <button type="submit">Upload</button>
         </form>
 
         <h2>Now playing:</h2>

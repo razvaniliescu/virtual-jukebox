@@ -3,6 +3,8 @@ from flask_socketio import SocketIO, emit
 import threading
 import subprocess
 import time
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -11,6 +13,21 @@ now_playing = None
 skip_votes = set()
 
 connected_users = 0
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'mp3', 'm4a', 'wav', 'mp4', 'mkv', 'mov'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def convert_to_audio(input_path, output_path):
+    subprocess.run([
+        'ffmpeg', '-i', input_path, '-vn', '-acodec', 'libmp3lame', output_path
+    ])
 
 @socketio.on('connect')
 def handle_connect():
@@ -65,6 +82,9 @@ def play_music():
             })
 
             subprocess.run(["mpv", "--no-video", song["audio_url"]])
+            
+            if now_playing and os.path.exists(now_playing["audio_url"]):
+                os.remove(now_playing["audio_url"])
 
             now_playing = None
             socketio.emit('now_playing', None)
@@ -99,7 +119,9 @@ def process_song(query):
         "audio_url": url,
         "thumbnail": thumbnail
     }
-
+    
+    print(result.stdout)
+    print(result.stderr)
     queue.append(song)
     socketio.emit('queue_updated', {"queue": queue})
 
@@ -113,6 +135,49 @@ def add():
     if not query:
         return redirect('/')
     threading.Thread(target=process_song, args=(query,), daemon=True).start()
+    return redirect('/')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return redirect('/')
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return redirect('/')
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(upload_path)
+
+        # Dacă e video, îl convertim
+        if filename.endswith(('.mp4', '.mkv', '.mov')):
+            audio_filename = filename.rsplit('.', 1)[0] + '.mp3'
+            audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+
+            convert_to_audio(upload_path, audio_path)
+            os.remove(upload_path)  # șterge video-ul original
+
+            song = {
+                "title": audio_filename,
+                "uploader": "Uploaded",
+                "audio_url": audio_path,
+                "thumbnail": "https://via.placeholder.com/100x100.png?text=Audio"
+            }
+        else:
+            # E deja audio
+            song = {
+                "title": filename,
+                "uploader": "Uploaded",
+                "audio_url": upload_path,
+                "thumbnail": "https://via.placeholder.com/100x100.png?text=Audio"
+            }
+
+        queue.append(song)
+        socketio.emit('queue_updated', {"queue": queue})
+
     return redirect('/')
 
 
