@@ -6,9 +6,13 @@ import time
 import os
 from werkzeug.utils import secure_filename
 import shutil
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, logger=True, engineio_logger=True)
 queue = []
 now_playing = None
 skip_votes = set()
@@ -193,4 +197,4 @@ def view_nowplaying():
 
 if __name__ == "__main__":
     threading.Thread(target=play_music, daemon=True).start()
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
