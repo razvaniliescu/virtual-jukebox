@@ -6,13 +6,9 @@ import time
 import os
 from werkzeug.utils import secure_filename
 import shutil
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-socketio = SocketIO(app, logger=True, engineio_logger=True)
+socketio = SocketIO(app)
 queue = []
 now_playing = None
 skip_votes = set()
@@ -87,7 +83,7 @@ def play_music():
                 'thumbnail': song['thumbnail']
             })
 
-            subprocess.run(["mpv", "--no-video", song["audio_url"]])
+            subprocess.run(["mpv", '--ao=alsa', '--audio-device=alsa_output.default', "--no-video", song["audio_url"]])
             
             if now_playing and os.path.exists(now_playing["audio_url"]):
                 os.remove(now_playing["audio_url"])
